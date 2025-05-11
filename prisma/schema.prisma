@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  Active
+  Banned
+}
+
+enum UserRole {
+  Customer
+  Admin
+}
+
+model User {
+  id        String     @id @default(uuid())
+  name      String?
+  email     String     @unique
+  password  String
+  status    UserStatus @default(Active)
+  role      UserRole   @default(Customer)
+  pictureId String?
+  picture   String?
+  address   String?
+  tel       String?
+  created   DateTime   @default(now())
+  updated   DateTime   @updatedAt
+}
+
+enum CatagoryStatus {
+  Active
+  Inactive
+}
+
+model Catagory {
+  id      String         @id @default(uuid())
+  name    String
+  status  CatagoryStatus @default(Active)
+  created DateTime       @default(now())
+  updated DateTime       @updatedAt
+  Product Product[]
+}
+
+enum ProductStatus {
+  Active
+  Inactive
+}
+
+model Product {
+  id          String        @id @default(uuid())
+  title       String
+  description String
+  cost        Float         @default(0)
+  basePrice   Float
+  price       Float
+  sold        Int           @default(0)
+  stock       Int           @default(0)
+  status      ProductStatus @default(Active)
+  pictureId   String?
+  picture     String?
+  created     DateTime      @default(now())
+  updated     DateTime      @updatedAt
+  catagoryId  String
+  catagory    Catagory      @relation(fields: [catagoryId], references: [id])
+}
