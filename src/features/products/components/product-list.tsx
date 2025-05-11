@@ -114,7 +114,6 @@ const ProductList = async ({ products }: ProductListProps) => {
                 <TableHead>Action</TableHead>
               </TableRow>
             </TableHeader>
-
             <TableBody>
               {products.length > 0 ? (
                 products.map((p, index) => (
@@ -122,10 +121,11 @@ const ProductList = async ({ products }: ProductListProps) => {
                     <TableCell>
                       <Image
                         alt={p.title}
-                        src="/images/no-product-image.webp"
+                        src={p.mainImage || "/images/no-product-image.webp"}
                         width={40}
                         height={40}
                         className="object-cover rounded-md"
+                        style={{ width: "auto", height: "auto" }} // Maintain aspect ratio
                       />
                     </TableCell>
                     <TableCell>
