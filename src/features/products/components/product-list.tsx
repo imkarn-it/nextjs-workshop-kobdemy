@@ -1,3 +1,5 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,12 +33,71 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import DeleteProductModal from "./delete-product-modal";
+import { useEffect, useState } from "react";
+import RestoreProductModal from "./restore-product-modal";
+import ProductDetailModal from "./product-detail-modal";
 
 interface ProductListProps {
   products: ProductType[];
 }
 
-const ProductList = async ({ products }: ProductListProps) => {
+const ProductList = ({ products }: ProductListProps) => {
+  //Tabs
+  const [activeTab, setActiveTab] = useState("all");
+  const [filteredProducts, setFilteredProducts] = useState(products);
+
+  // Search
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Modals
+  const [isDeleteModal, setIsDeleteModal] = useState(false);
+  const [isRestoreModal, setIsRestoreModal] = useState(false);
+  const [isProductDetailModal, setIsProductDetailModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(
+    null
+  );
+
+  useEffect(() => {
+    let result = [...products];
+    if (activeTab === "active") {
+      result = result.filter((p) => p.status === "Active");
+    } else if (activeTab === "inactive") {
+      result = result.filter((p) => p.status === "Inactive");
+    } else if (activeTab === "low-stock") {
+      result = result.filter((p) => p.stock < p.lowStock);
+    }
+    if (searchTerm) {
+      result = result.filter((p) =>
+        p.title.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    setFilteredProducts(result);
+  }, [activeTab, products, searchTerm]);
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+  };
+
+  const handleDeleteProduct = (product: ProductType) => {
+    setSelectedProduct(product);
+    setIsDeleteModal(true);
+  };
+
+  const handleRestoreProduct = (product: ProductType) => {
+    setSelectedProduct(product);
+    setIsRestoreModal(true);
+  };
+
+  const handleViewProduct = (product: ProductType) => {
+    setSelectedProduct(product);
+    setIsProductDetailModal(true);
+  };
+
   return (
     <>
       <Card>
@@ -51,7 +112,7 @@ const ProductList = async ({ products }: ProductListProps) => {
             </Button>
           </div>
 
-          <Tabs>
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="grid grid-cols-4 mb-4">
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="active">Active</TabsTrigger>
@@ -81,11 +142,7 @@ const ProductList = async ({ products }: ProductListProps) => {
                 </Badge>
                 <Badge variant="outline" className="sm:px-3 py-1">
                   <span className="font-semibold text-amber-600">
-                    {
-                      products.filter(
-                        (p) => p.stock < p.lowStock && p.status === "Active"
-                      ).length
-                    }
+                    {products.filter((p) => p.stock < p.lowStock).length}
                   </span>
                   Low Stock
                 </Badge>
@@ -96,7 +153,11 @@ const ProductList = async ({ products }: ProductListProps) => {
                   size={16}
                   className="absolute left-2 top-2.5 text-muted-foreground"
                 />
-                <Input className="pl-8" placeholder="Search products..." />
+                <Input
+                  onChange={(e) => handleSearch(e)}
+                  className="pl-8"
+                  placeholder="Search products..."
+                />
               </div>
             </div>
           </Tabs>
@@ -115,13 +176,15 @@ const ProductList = async ({ products }: ProductListProps) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {products.length > 0 ? (
-                products.map((p, index) => (
+              {filteredProducts.length > 0 ? (
+                filteredProducts.map((p, index) => (
                   <TableRow key={index}>
                     <TableCell>
                       <Image
                         alt={p.title}
-                        src={p.mainImage || "/images/no-product-image.webp"}
+                        src={
+                          p.mainImage?.url || "/images/no-product-image.webp"
+                        }
                         width={40}
                         height={40}
                         className="object-cover rounded-md"
@@ -178,23 +241,31 @@ const ProductList = async ({ products }: ProductListProps) => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleViewProduct(p)}
+                          >
                             <Eye size={15} />
                             <span>View</span>
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Pencil size={15} />
-                            <span>Edit</span>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/back-office/products/edit/${p.id}`}>
+                              <Pencil size={15} />
+                              <span>Edit</span>
+                            </Link>
                           </DropdownMenuItem>
 
                           <DropdownMenuSeparator />
                           {p.status === "Active" ? (
-                            <DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleDeleteProduct(p)}
+                            >
                               <Trash2 className="text-destructive" size={15} />
                               <span className="text-destructive">Delete</span>
                             </DropdownMenuItem>
                           ) : (
-                            <DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleRestoreProduct(p)}
+                            >
                               <RefreshCcw
                                 className="text-green-600"
                                 size={15}
@@ -221,6 +292,21 @@ const ProductList = async ({ products }: ProductListProps) => {
           </Table>
         </CardContent>
       </Card>
+      <DeleteProductModal
+        open={isDeleteModal}
+        onOpenChange={setIsDeleteModal}
+        product={selectedProduct}
+      />
+      <RestoreProductModal
+        open={isRestoreModal}
+        onOpenChange={setIsRestoreModal}
+        product={selectedProduct}
+      />
+      <ProductDetailModal
+        open={isProductDetailModal}
+        onOpenChange={setIsProductDetailModal}
+        product={selectedProduct}
+      />
     </>
   );
 };

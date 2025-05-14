@@ -5,24 +5,31 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 interface ModelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  children : React.ReactNode
-  title : string
-  description : string
+  children: React.ReactNode;
+  title: string;
+  description: string;
+  className?: string;
 }
 
-const Model = ({open,onOpenChange,children,title,description}:ModelProps) => {
+const Model = ({
+  open,
+  onOpenChange,
+  children,
+  title,
+  description,
+  className,
+}: ModelProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className={cn("sm:max-w-md", className)}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>
-            {description}
-          </DialogDescription>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
 
         {children}
